@@ -8,14 +8,13 @@ import numpy as np
 import pandas as pd
 import torch
 from pydantic import validate_arguments
-from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import trange
 
 # synthcity absolute
 from synthcity.logger import info
 from synthcity.metrics.weighted_metrics import WeightedMetrics
-from synthcity.utils.callbacks import Callback, ValidationMixin
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.dataframe import discrete_columns
 
@@ -23,7 +22,7 @@ from synthcity.utils.dataframe import discrete_columns
 from .gaussian_multinomial_diffsuion import GaussianMultinomialDiffusion
 
 
-class TabDDPM(nn.Module, ValidationMixin):
+class TabDDPM(TorchModuleWithValidation):
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def __init__(
         self,
@@ -45,14 +44,9 @@ class TabDDPM(nn.Module, ValidationMixin):
         model_type: str = "mlp",
         model_params: Optional[dict] = None,
         dim_embed: int = 128,
-        # early stopping
-        n_iter_min: int = 100,
-        patience: int = 5,
     ) -> None:
-        nn.Module.__init__(self)
-        ValidationMixin.__init__(
-            self,
-            valid_metric=valid_metric,  # type: ignore
+        super().__init__(
+            valid_metric=valid_metric,
             valid_size=valid_size,
             callbacks=callbacks,
         )
@@ -85,7 +79,7 @@ class TabDDPM(nn.Module, ValidationMixin):
         self, X: pd.DataFrame, cond: Optional[pd.Series] = None, **kwargs: Any
     ) -> "TabDDPM":
 
-        X = self._set_val_data(X)
+        X, cond = self._set_val_data(X, cond)
 
         self.on_fit_begin()
 
@@ -154,7 +148,6 @@ class TabDDPM(nn.Module, ValidationMixin):
         pbar = trange(self.n_iter, desc="Epoch", leave=True)
 
         for epoch in pbar:
-            self.train()
             self.on_epoch_begin()
 
             for x, y in self.dataloader:
@@ -186,7 +179,6 @@ class TabDDPM(nn.Module, ValidationMixin):
                     curr_loss_gauss = 0.0
                     curr_loss_multi = 0.0
 
-            self.eval()
             self.on_epoch_end()
 
             if self.valid_score is not None:

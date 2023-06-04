@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Optional, Union
+from typing import Any, Optional, Sequence, Union
 
 # third party
 import numpy as np
@@ -10,6 +10,7 @@ from sklearn.preprocessing import OneHotEncoder
 from torch import nn
 
 # synthcity absolute
+from synthcity.utils.callbacks import Callback
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.samplers import BaseSampler, ConditionalDatasetSampler
 
@@ -110,10 +111,12 @@ class TabularVAE(nn.Module):
         loss_factor: int = 1,  # used for standar losss
         dataloader_sampler: Optional[BaseSampler] = None,
         clipping_value: int = 1,
-        # early stopping
-        n_iter_min: int = 100,
+        valid_size: float = 0,
+        callbacks: Sequence[Callback] = (),
         n_iter_print: int = 10,
-        patience: int = 20,
+        # early stopping
+        # n_iter_min: int = 100,
+        # patience: int = 20,
     ) -> None:
         super(TabularVAE, self).__init__()
         self.columns = X.columns
@@ -228,9 +231,11 @@ class TabularVAE(nn.Module):
             robust_divergence_beta=robust_divergence_beta,
             loss_factor=loss_factor,
             clipping_value=clipping_value,
+            valid_size=valid_size,
+            callbacks=callbacks,
             n_iter_print=n_iter_print,
-            n_iter_min=n_iter_min,
-            patience=patience,
+            # n_iter_min=n_iter_min,
+            # patience=patience,
         )
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))

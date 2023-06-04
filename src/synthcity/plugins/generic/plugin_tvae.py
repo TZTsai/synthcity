@@ -112,8 +112,8 @@ class TVAEPlugin(Plugin):
         dataloader_sampler: Optional[sampler.Sampler] = None,
         clipping_value: int = 1,
         n_iter_print: int = 50,
-        n_iter_min: int = 100,
-        patience: int = 5,
+        # n_iter_min: int = 100,
+        # patience: int = 5,
         # core plugin arguments
         device: Any = DEVICE,
         workspace: Path = Path("workspace"),
@@ -150,8 +150,8 @@ class TVAEPlugin(Plugin):
         self.device = device
 
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
-        self.patience = patience
+        # self.n_iter_min = n_iter_min
+        # self.patience = patience
 
     @staticmethod
     def name() -> str:
@@ -218,9 +218,9 @@ class TVAEPlugin(Plugin):
             dataloader_sampler=self.dataloader_sampler,
             loss_factor=self.loss_factor,
             clipping_value=self.clipping_value,
-            n_iter_min=self.n_iter_min,
             n_iter_print=self.n_iter_print,
-            patience=self.patience,
+            # n_iter_min=self.n_iter_min,
+            # patience=self.patience,
             device=self.device,
         )
         self.model.fit(X.dataframe(), **kwargs)

@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 # third party
 import numpy as np
@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 # synthcity absolute
 import synthcity.logger as log
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 
 # synthcity relative
@@ -118,7 +119,7 @@ class Decoder(nn.Module):
         return torch.cat([X, cond], dim=1)
 
 
-class VAE(nn.Module):
+class VAE(TorchModuleWithValidation):
     """
     .. inheritance-diagram:: synthcity.plugins.core.models.vae.VAE
         :parts: 1
@@ -220,12 +221,18 @@ class VAE(nn.Module):
         device: Any = DEVICE,
         extra_loss_cbks: List[Callable] = [],
         clipping_value: int = 1,
-        # early stopping
-        n_iter_min: int = 100,
+        valid_size: float = 0,
+        callbacks: Sequence[Callback] = (),
         n_iter_print: int = 10,
-        patience: int = 20,
+        # early stopping
+        # n_iter_min: int = 100,
+        # patience: int = 20,
     ) -> None:
-        super(VAE, self).__init__()
+        super().__init__(
+            valid_metric=None,  # validation metric is overriden
+            valid_size=valid_size,
+            callbacks=callbacks,
+        )
 
         if loss_strategy not in ["standard", "robust_divergence"]:
             raise ValueError(f"invalid loss strategy {loss_strategy}")
@@ -246,8 +253,8 @@ class VAE(nn.Module):
         self.n_units_conditional = n_units_conditional
         self.clipping_value = clipping_value
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
-        self.patience = patience
+        # self.n_iter_min = n_iter_min
+        # self.patience = patience
 
         self.encoder = Encoder(
             n_features + n_units_conditional,
@@ -381,7 +388,9 @@ class VAE(nn.Module):
     ) -> Any:
         self._original_cond = cond
 
-        X, X_val, cond, cond_val = self._train_test_split(X, cond)
+        # X, X_val, cond, cond_val = self._train_test_split(X, cond)
+
+        X, cond = self._set_val_data(X, cond)
         loader = self._dataloader(X, cond)
 
         optimizer = Adam(
@@ -390,11 +399,14 @@ class VAE(nn.Module):
             lr=self.lr,
         )
 
-        best_loss = np.inf
-        best_state_dict = None
-        patience = 0
+        self.on_fit_begin()
+
+        # best_loss = np.inf
+        # best_state_dict = None
+        # patience = 0
         for epoch in tqdm(range(self.n_iter)):
-            self.train()
+            self.on_epoch_begin()
+
             for id_, data in enumerate(loader):
                 cond_mb: Optional[torch.Tensor] = None
 
@@ -422,40 +434,43 @@ class VAE(nn.Module):
                 loss.backward()
                 optimizer.step()
 
+            self.on_epoch_end()
+
             if epoch % self.n_iter_print == 0:
-                self.eval()
-                mu, logvar = self.encoder(X_val, cond_val)
-                embedding = self._reparameterize(mu, logvar)
-                reconstructed = self.decoder(embedding, cond_val)
-
-                val_loss = (
-                    self._loss_function(
-                        reconstructed,
-                        X_val,
-                        mu,
-                        logvar,
-                        cond_val,
-                    )
-                    .detach()
-                    .item()
-                )
-
+                val_loss = self.valid_score
                 log.debug(f"[{epoch}/{self.n_iter}] Loss: {val_loss}")
-                if val_loss >= best_loss:
-                    patience += 1
-                else:
-                    best_loss = val_loss
-                    best_state_dict = self.state_dict()
-                    patience = 0
+                # if val_loss >= best_loss:
+                #     patience += 1
+                # else:
+                #     best_loss = val_loss
+                #     best_state_dict = self.state_dict()
+                #     patience = 0
 
-                if patience >= self.patience and epoch >= self.n_iter_min:
-                    log.debug(f"[{epoch}/{self.n_iter}] Early stopping")
-                    break
+                # if patience >= self.patience and epoch >= self.n_iter_min:
+                #     log.debug(f"[{epoch}/{self.n_iter}] Early stopping")
+                #     break
 
-        if best_state_dict is not None:
-            self.load_state_dict(best_state_dict)
+        # if best_state_dict is not None:
+        #     self.load_state_dict(best_state_dict)
 
         return self
+
+    def validate(self) -> float:
+        X_val, cond_val = self.valid_set  # type: ignore
+        mu, logvar = self.encoder(X_val, cond_val)
+        embedding = self._reparameterize(mu, logvar)
+        reconstructed = self.decoder(embedding, cond_val)
+        return (
+            self._loss_function(
+                reconstructed,
+                X_val,
+                mu,
+                logvar,
+                cond_val,
+            )
+            .detach()
+            .item()
+        )
 
     def _check_tensor(self, X: Tensor) -> Tensor:
         if isinstance(X, Tensor):
