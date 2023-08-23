@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 # synthcity absolute
 import synthcity.logger as log
+from synthcity.metrics.weighted_metrics import WeightedMetrics
 from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 
@@ -179,13 +180,6 @@ class VAE(TorchModuleWithValidation):
             Custom loss callbacks. For example, for conditional loss.
         clipping_value:
             Gradients clipping value. Zero disables the feature
-        # early stopping
-        n_iter_print: int
-            Number of iterations after which to print updates and check the validation loss.
-        n_iter_min: int
-            Minimum number of iterations to go through before starting early stopping
-        patience: int
-            Max number of iterations without any improvement before early stopping is trigged.
     """
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -221,12 +215,10 @@ class VAE(TorchModuleWithValidation):
         device: Any = DEVICE,
         extra_loss_cbks: List[Callable] = [],
         clipping_value: int = 1,
-        valid_size: float = 0,
         callbacks: Sequence[Callback] = (),
+        valid_metric: Optional[WeightedMetrics] = None,
+        valid_size: float = 0.0,
         n_iter_print: int = 10,
-        # early stopping
-        # n_iter_min: int = 100,
-        # patience: int = 20,
     ) -> None:
         super().__init__(
             valid_metric=None,  # validation metric is overriden

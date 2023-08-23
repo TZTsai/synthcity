@@ -72,7 +72,7 @@ class ValidationMixin(CallbackHookMixin):
     def metric_direction(self) -> str:
         return self.valid_metric.direction()  # type: ignore
 
-    def _set_val_data(self, data: pd.DataFrame, cond: Any = None) -> pd.DataFrame:
+    def _set_val_data(self, data: Any, cond: Any = None) -> Any:
         if self.valid_size > 0 and self.valid_metric is not None:
             if cond is None:
                 data, vd = train_test_split(data, test_size=self.valid_size)
@@ -85,7 +85,7 @@ class ValidationMixin(CallbackHookMixin):
         return data, cond
 
     @abstractmethod
-    def generate(self, count: int, cond: Any = None) -> pd.DataFrame:
+    def generate(self, count: int, cond: Any = None) -> Any:
         """Generate synthetic data."""
 
     def validate(self) -> Optional[float]:
@@ -112,7 +112,7 @@ class TorchModuleWithValidation(nn.Module, ValidationMixin):
     def __init__(
         self,
         valid_metric: Optional[WeightedMetrics] = None,
-        valid_size: float = 0,
+        valid_size: float = 0.0,
         callbacks: Sequence[Callback] = (),
     ) -> None:
         nn.Module.__init__(self)

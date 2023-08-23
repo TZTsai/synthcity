@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 # third party
 import numpy as np
@@ -22,13 +22,14 @@ from nflows.transforms.coupling import (
 from nflows.transforms.lu import LULinear
 from nflows.transforms.permutations import RandomPermutation
 from nflows.transforms.svd import SVDLinear
-from torch import nn, optim
+from torch import optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 # synthcity absolute
 from synthcity.metrics.weighted_metrics import WeightedMetrics
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 
 
@@ -45,7 +46,7 @@ def create_alternating_binary_mask(features: int, even: bool = True) -> torch.Te
     return mask
 
 
-class NormalizingFlows(nn.Module):
+class NormalizingFlows(TorchModuleWithValidation):
     """Normalizing Flows are generative models which produce tractable distributions where both sampling and density evaluation can be efficient and exact.
 
     Args:
@@ -120,13 +121,18 @@ class NormalizingFlows(nn.Module):
         linear_transform_type: str = "permutation",  # "lu", "permutation", "svd"
         base_transform_type: str = "rq-autoregressive",  # "affine-coupling", "quadratic-coupling", "rq-coupling", "affine-autoregressive", "quadratic-autoregressive", "rq-autoregressive"
         device: Any = DEVICE,
+        callbacks: Sequence[Callback] = (),
+        valid_metric: Optional[WeightedMetrics] = None,
+        valid_size: float = 0.0,
         # early stopping
         n_iter_min: int = 100,
         n_iter_print: int = 10,
         patience: int = 20,
         patience_metric: Optional[WeightedMetrics] = None,
     ) -> None:
-        super(NormalizingFlows, self).__init__()
+        super().__init__(
+            callbacks=callbacks, valid_metric=valid_metric, valid_size=valid_size
+        )
         self.device = device
         self.n_iter = n_iter
         self.n_layers_hidden = n_layers_hidden
@@ -153,7 +159,7 @@ class NormalizingFlows(nn.Module):
         dataset = TensorDataset(X)
         return DataLoader(dataset, batch_size=self.batch_size, pin_memory=False)
 
-    def generate(self, count: int) -> np.ndarray:
+    def generate(self, count: int, cond: Any = None) -> pd.DataFrame:
         return self(count).detach().cpu().numpy()
 
     def forward(self, count: int) -> torch.Tensor:

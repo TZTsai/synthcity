@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 # third party
 import numpy as np
@@ -7,13 +7,13 @@ import pandas as pd
 import torch
 from opacus import PrivacyEngine
 from pydantic import validate_arguments
-from torch import nn
 from torch.utils.data import DataLoader, TensorDataset, sampler
 from tqdm import tqdm
 
 # synthcity absolute
 import synthcity.logger as log
 from synthcity.metrics.weighted_metrics import WeightedMetrics
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.reproducibility import clear_cache, enable_reproducible_results
 
@@ -21,7 +21,7 @@ from synthcity.utils.reproducibility import clear_cache, enable_reproducible_res
 from .mlp import MLP
 
 
-class GAN(nn.Module):
+class GAN(TorchModuleWithValidation):
     """
     .. inheritance-diagram:: synthcity.plugins.core.models.gan.GAN
         :parts: 1
@@ -157,6 +157,9 @@ class GAN(nn.Module):
         n_iter_print: int = 10,
         patience: int = 20,
         patience_metric: Optional[WeightedMetrics] = None,
+        callbacks: Sequence[Callback] = (),
+        valid_size: float = 0.0,
+        valid_metric: Optional[WeightedMetrics] = None,
         # privacy settings
         dp_enabled: bool = False,
         dp_delta: Optional[float] = None,
@@ -164,7 +167,9 @@ class GAN(nn.Module):
         dp_max_grad_norm: float = 2,
         dp_secure_mode: bool = False,
     ) -> None:
-        super(GAN, self).__init__()
+        super().__init__(
+            valid_metric=valid_metric, valid_size=valid_size, callbacks=callbacks
+        )
 
         extra_penalty_list = ["identifiability_penalty"]
         for penalty in generator_extra_penalties:

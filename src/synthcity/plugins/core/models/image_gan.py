@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 # third party
 import matplotlib.pyplot as plt
@@ -16,6 +16,7 @@ import synthcity.logger as log
 from synthcity.metrics.weighted_metrics import WeightedMetrics
 from synthcity.plugins.core.dataloader import ImageDataLoader
 from synthcity.plugins.core.dataset import ConditionalDataset, FlexibleDataset
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.reproducibility import clear_cache, enable_reproducible_results
 
@@ -40,7 +41,7 @@ def weights_init(m: nn.Module) -> None:
         torch.nn.init.constant_(m.bias, val=0)
 
 
-class ImageGAN(nn.Module):
+class ImageGAN(TorchModuleWithValidation):
     """
     .. inheritance-diagram:: synthcity.plugins.core.models.image_gan.ImageGAN
         :parts: 1
@@ -138,11 +139,13 @@ class ImageGAN(nn.Module):
         lambda_gradient_penalty: float = 10,
         lambda_identifiability_penalty: float = 0.1,
         device: Any = DEVICE,
-        n_iter_min: int = 100,
         n_iter_print: int = 1,
         plot_progress: int = False,
-        patience: int = 20,
-        patience_metric: Optional[WeightedMetrics] = None,
+        callbacks: Sequence[Callback] = (),
+        valid_size: float = 0.0,
+        valid_metric: Optional[WeightedMetrics] = None,
+        # n_iter_min: int = 100,
+        # patience: int = 20,
         dataloader_sampler: Optional[sampler.Sampler] = None,
         # privacy settings
         dp_enabled: bool = False,
@@ -151,7 +154,9 @@ class ImageGAN(nn.Module):
         dp_max_grad_norm: float = 2,
         dp_secure_mode: bool = False,
     ) -> None:
-        super(ImageGAN, self).__init__()
+        super().__init__(
+            callbacks=callbacks, valid_size=valid_size, valid_metric=valid_metric
+        )
 
         extra_penalty_list = ["identifiability_penalty"]
         for penalty in generator_extra_penalties:
@@ -182,9 +187,6 @@ class ImageGAN(nn.Module):
         self.discriminator_opt_betas = discriminator_opt_betas
 
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
-        self.patience = patience
-        self.patience_metric = patience_metric
         self.batch_size = batch_size
         self.clipping_value = clipping_value
 

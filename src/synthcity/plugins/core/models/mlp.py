@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Tuple
 
 # third party
 import numpy as np
@@ -10,12 +10,14 @@ from torch.utils.data import DataLoader, TensorDataset
 
 # synthcity absolute
 import synthcity.logger as log
+from synthcity.metrics.weighted_metrics import WeightedMetrics
 from synthcity.plugins.core.models.factory import get_nonlin
 from synthcity.plugins.core.models.layers import (
     GumbelSoftmax,
     MultiActivationHead,
     SkipConnection,
 )
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.reproducibility import enable_reproducible_results
 
@@ -56,7 +58,7 @@ class LinearLayer(nn.Module):
 ResidualLayer = SkipConnection(LinearLayer)
 
 
-class MLP(nn.Module):
+class MLP(TorchModuleWithValidation):
     """
     .. inheritance-diagram:: synthcity.plugins.core.models.mlp.MLP
         :parts: 1
@@ -134,9 +136,14 @@ class MLP(nn.Module):
         early_stopping: bool = True,
         residual: bool = False,
         loss: Optional[Callable] = None,
+        callbacks: Sequence[Callback] = (),
+        valid_size: float = 0.0,
+        valid_metric: Optional[WeightedMetrics] = None,
         device: Any = DEVICE,
     ) -> None:
-        super(MLP, self).__init__()
+        super().__init__(
+            valid_metric=valid_metric, valid_size=valid_size, callbacks=callbacks
+        )
 
         if n_units_in < 0:
             raise ValueError("n_units_in must be >= 0")

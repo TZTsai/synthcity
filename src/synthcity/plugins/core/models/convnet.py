@@ -1,40 +1,22 @@
 # stdlib
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Sequence, Tuple
 
 # third party
 import numpy as np
 import torch
-from monai.networks.layers.factories import Act
 from monai.networks.nets import Classifier, Discriminator, Generator
 from pydantic import validate_arguments
 from torch import nn
 
 # synthcity absolute
 import synthcity.logger as log
+from synthcity.plugins.core.models.factory import get_nonlin
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.reproducibility import enable_reproducible_results
 
 
-def map_nonlin(nonlin: str) -> Act:
-    if nonlin == "relu":
-        return Act.RELU
-    elif nonlin == "elu":
-        return Act.ELU
-    elif nonlin == "prelu":
-        return Act.PRELU
-    elif nonlin == "leaky_relu":
-        return Act.LEAKYRELU
-    elif nonlin == "sigmoid":
-        return Act.SIGMOID
-    elif nonlin == "softmax":
-        return Act.SOFTMAX
-    elif nonlin == "tanh":
-        return Act.TANH
-
-    raise ValueError(f"Unknown activation {nonlin}")
-
-
-class ConvNet(nn.Module):
+class ConvNet(TorchModuleWithValidation):
     """
     Wrapper for convolutional nets for classification and regression.
 
@@ -78,13 +60,16 @@ class ConvNet(nn.Module):
         batch_size: int = 500,
         n_iter_print: int = 100,
         random_state: int = 0,
-        patience: int = 10,
-        n_iter_min: int = 100,
         clipping_value: int = 1,
-        early_stopping: bool = True,
+        valid_size: float = 0,
+        callbacks: Sequence[Callback] = (),
         device: Any = DEVICE,
     ) -> None:
-        super(ConvNet, self).__init__()
+        super().__init__(
+            valid_metric=None,  # validation metric is overriden
+            valid_size=valid_size,
+            callbacks=callbacks,
+        )
 
         if task_type not in ["classification", "regression"]:
             raise ValueError(f"Invalid task type {task_type}")
@@ -110,11 +95,8 @@ class ConvNet(nn.Module):
         # training
         self.n_iter = n_iter
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
         self.batch_size = batch_size
-        self.patience = patience
         self.clipping_value = clipping_value
-        self.early_stopping = early_stopping
         if task_type == "classification":
             self.loss = nn.CrossEntropyLoss()
         else:
@@ -437,7 +419,7 @@ def suggest_image_generator_discriminator_arch(
                 strides=[2, 2, 2, 1],
                 kernel_size=3,
                 dropout=generator_dropout,
-                act=map_nonlin(generator_nonlin),
+                act=get_nonlin(generator_nonlin),
                 num_res_units=generator_n_residual_units,
             ),
             nn.Tanh(),
@@ -449,7 +431,7 @@ def suggest_image_generator_discriminator_arch(
             kernel_size=3,
             last_act=None,
             dropout=discriminator_dropout,
-            act=map_nonlin(generator_nonlin),
+            act=get_nonlin(generator_nonlin),
             num_res_units=discriminator_n_residual_units,
         ).to(device)
 
@@ -559,8 +541,8 @@ def suggest_image_classifier_arch(
             classes=classes,
             channels=[16, 32, 64, 1],
             strides=[start_stride, 2, 2, 2],
-            act=map_nonlin(nonlin),
-            last_act=map_nonlin(last_nonlin),
+            act=get_nonlin(nonlin),
+            last_act=get_nonlin(last_nonlin),
             dropout=dropout,
             num_res_units=n_residual_units,
         ).to(device)
