@@ -1,7 +1,7 @@
 # stdlib
 from collections.abc import Iterator
 from copy import deepcopy
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional
 
 # third party
 import numpy as np
@@ -34,7 +34,7 @@ class TabDDPM(TorchModuleWithValidation):
         is_classification: bool = False,
         gaussian_loss_type: str = "mse",
         scheduler: str = "cosine",
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         device: torch.device = DEVICE,
         log_interval: int = 10,
         # validation

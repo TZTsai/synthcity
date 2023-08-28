@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Optional, Sequence, Union
+from typing import Any, List, Optional, Union
 
 # third party
 import numpy as np
@@ -112,7 +112,7 @@ class TabularVAE(nn.Module):
         dataloader_sampler: Optional[BaseSampler] = None,
         clipping_value: int = 1,
         valid_size: float = 0,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         n_iter_print: int = 10,
         # early stopping
         # n_iter_min: int = 100,

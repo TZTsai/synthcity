@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Tuple
 
 # third party
 import numpy as np
@@ -93,15 +93,8 @@ class NormalizingFlows(TorchModuleWithValidation):
                     Ref: Durkan et al, "Neural Spline Flows".
                 - rq-autoregressive : Rational Quadratic Autoregressive Transform
                     Ref: Durkan et al, "Neural Spline Flows".
-        # early stopping
         n_iter_print: int
             Number of iterations after which to print updates and check the validation loss.
-        n_iter_min: int
-            Minimum number of iterations to go through before starting early stopping
-        patience: int
-            Max number of iterations without any improvement before early stopping is trigged.
-        patience_metric: Optional[WeightedMetrics]
-            If not None, the metric is used for evaluation the criterion for early stopping.
     """
 
     def __init__(
@@ -121,14 +114,10 @@ class NormalizingFlows(TorchModuleWithValidation):
         linear_transform_type: str = "permutation",  # "lu", "permutation", "svd"
         base_transform_type: str = "rq-autoregressive",  # "affine-coupling", "quadratic-coupling", "rq-coupling", "affine-autoregressive", "quadratic-autoregressive", "rq-autoregressive"
         device: Any = DEVICE,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         valid_metric: Optional[WeightedMetrics] = None,
         valid_size: float = 0.0,
-        # early stopping
-        n_iter_min: int = 100,
         n_iter_print: int = 10,
-        patience: int = 20,
-        patience_metric: Optional[WeightedMetrics] = None,
     ) -> None:
         super().__init__(
             callbacks=callbacks, valid_metric=valid_metric, valid_size=valid_size
@@ -151,9 +140,6 @@ class NormalizingFlows(TorchModuleWithValidation):
         self.base_transform_type = base_transform_type
 
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
-        self.patience = patience
-        self.patience_metric = patience_metric
 
     def dataloader(self, X: torch.Tensor) -> DataLoader:
         dataset = TensorDataset(X)

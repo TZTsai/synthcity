@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 # third party
 import numpy as np
@@ -136,7 +136,7 @@ class MLP(TorchModuleWithValidation):
         early_stopping: bool = True,
         residual: bool = False,
         loss: Optional[Callable] = None,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         valid_size: float = 0.0,
         valid_metric: Optional[WeightedMetrics] = None,
         device: Any = DEVICE,

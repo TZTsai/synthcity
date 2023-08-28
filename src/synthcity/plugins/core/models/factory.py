@@ -111,7 +111,7 @@ def _dynamic_import(path: str) -> type:
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))
-def get_model(block: Union[str, type], params: dict) -> Any:
+def get_model(model: Union[str, type], params: dict) -> Any:
     """Get a model from a name or a class.
 
     Named models:
@@ -122,7 +122,7 @@ def get_model(block: Union[str, type], params: dict) -> Any:
     - transformer
     - tabnet
     """
-    return _get(block, params, MODELS)
+    return _get(model, params, MODELS)
 
 
 @validate_arguments(config=dict(arbitrary_types_allowed=True))

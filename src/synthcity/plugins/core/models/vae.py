@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 # third party
 import numpy as np
@@ -215,7 +215,7 @@ class VAE(TorchModuleWithValidation):
         device: Any = DEVICE,
         extra_loss_cbks: List[Callable] = [],
         clipping_value: int = 1,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         valid_metric: Optional[WeightedMetrics] = None,
         valid_size: float = 0.0,
         n_iter_print: int = 10,

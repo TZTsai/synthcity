@@ -2,7 +2,7 @@
 """
 
 # stdlib
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 # third party
 import numpy as np
@@ -147,7 +147,7 @@ class TabularEncoder(TransformerMixin, BaseEstimator):
         self.output_dimensions = 0
 
         self._column_raw_dtypes = raw_data.infer_objects().dtypes
-        self._column_transform_info_list: Sequence[FeatureInfo] = []
+        self._column_transform_info_list: List[FeatureInfo] = []
 
         for name in raw_data.columns:
             if name in self.whitelist:
@@ -241,7 +241,7 @@ class TabularEncoder(TransformerMixin, BaseEstimator):
         ).astype(self._column_raw_dtypes.filter(names))
         return recovered_data
 
-    def layout(self) -> Sequence[FeatureInfo]:
+    def layout(self) -> List[FeatureInfo]:
         """Get the layout of the encoded dataset.
 
         Returns a list of tuple, describing each column as:
@@ -266,7 +266,7 @@ class TabularEncoder(TransformerMixin, BaseEstimator):
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
     def activation_layout(
         self, discrete_activation: str, continuous_activation: str
-    ) -> Sequence[Tuple[str, int]]:
+    ) -> List[Tuple[str, int]]:
         """Get the layout of the activations.
 
         Returns a list of tuple, describing each column as:

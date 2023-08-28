@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 # third party
 import numpy as np
@@ -11,6 +11,7 @@ from scipy.special import logsumexp
 from sklearn.preprocessing import OneHotEncoder
 
 # synthcity absolute
+from synthcity.callbacks import Callback, TorchModuleWithValidation
 from synthcity.metrics.weighted_metrics import WeightedMetrics
 from synthcity.utils.constants import DEVICE
 from synthcity.utils.samplers import BaseSampler, ConditionalDatasetSampler
@@ -20,7 +21,7 @@ from .gan import GAN
 from .tabular_encoder import TabularEncoder
 
 
-class TabularGAN(torch.nn.Module):
+class TabularGAN(TorchModuleWithValidation):
     """
     .. inheritance-diagram:: synthcity.plugins.core.models.tabular_gan.TabularGAN
         :parts: 1
@@ -159,10 +160,10 @@ class TabularGAN(torch.nn.Module):
         encoder_whitelist: list = [],
         dataloader_sampler: Optional[BaseSampler] = None,
         device: Any = DEVICE,
-        patience: int = 10,
-        patience_metric: Optional[WeightedMetrics] = None,
+        callbacks: List[Callback] = [],
+        valid_size: float = 0.0,
+        valid_metric: Optional[WeightedMetrics] = None,
         n_iter_print: int = 50,
-        n_iter_min: int = 100,
         adjust_inference_sampling: bool = False,
         # privacy settings
         dp_enabled: bool = False,
@@ -299,11 +300,8 @@ class TabularGAN(torch.nn.Module):
             n_iter_print=n_iter_print,
             random_state=random_state,
             # early stopping
-            n_iter_min=n_iter_min,
             dataloader_sampler=dataloader_sampler,
             device=device,
-            patience=patience,
-            patience_metric=patience_metric,
             # privacy
             dp_enabled=dp_enabled,
             dp_epsilon=dp_epsilon,

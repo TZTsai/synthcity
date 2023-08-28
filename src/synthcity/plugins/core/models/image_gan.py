@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 # third party
 import matplotlib.pyplot as plt
@@ -91,15 +91,8 @@ class ImageGAN(TorchModuleWithValidation):
             Optional sampler for the dataloader, useful for conditional sampling
         device: Any = DEVICE
             CUDA/CPU
-        # early stopping
         n_iter_print: int
             Number of iterations after which to print updates and check the validation loss.
-        n_iter_min: int
-            Minimum number of iterations to go through before starting early stopping
-        patience: int
-            Max number of iterations without any improvement before early stopping is trigged.
-        patience_metric: Optional[WeightedMetrics]
-            If not None, the metric is used for evaluation the criterion for early stopping.
         # privacy settings
         dp_enabled: bool
             Train the discriminator with Differential Privacy guarantees
@@ -141,11 +134,10 @@ class ImageGAN(TorchModuleWithValidation):
         device: Any = DEVICE,
         n_iter_print: int = 1,
         plot_progress: int = False,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         valid_size: float = 0.0,
         valid_metric: Optional[WeightedMetrics] = None,
-        # n_iter_min: int = 100,
-        # patience: int = 20,
+        n_iter_min: int = 100,
         dataloader_sampler: Optional[sampler.Sampler] = None,
         # privacy settings
         dp_enabled: bool = False,

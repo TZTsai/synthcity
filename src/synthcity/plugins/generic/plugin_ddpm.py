@@ -4,7 +4,7 @@ Reference: Kotelnikov, Akim et al. “TabDDPM: Modelling Tabular Data with Diffu
 
 # stdlib
 from pathlib import Path
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
 # third party
 import numpy as np
@@ -61,7 +61,7 @@ class TabDDPMPlugin(Plugin):
             Parameters of the diffusion model. Should be different for different model types.
         device: Any = DEVICE
             Device to use for training.
-        callbacks: Sequence[Callback] = ()
+        callbacks: List[Callback] = []
             Callbacks to use during training.
         log_interval: int = 100
             Number of iterations between logging.
@@ -102,7 +102,7 @@ class TabDDPMPlugin(Plugin):
         gaussian_loss_type: str = "mse",
         scheduler: str = "cosine",
         device: Any = DEVICE,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         log_interval: int = 100,
         model_type: str = "mlp",
         model_params: dict = {},

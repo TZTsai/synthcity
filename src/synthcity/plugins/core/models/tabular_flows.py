@@ -1,14 +1,14 @@
 # stdlib
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 # third party
 import pandas as pd
 import torch
 from pydantic import validate_arguments
-from torch import nn
 
 # synthcity absolute
 from synthcity.metrics.weighted_metrics import WeightedMetrics
+from synthcity.utils.callbacks import Callback, TorchModuleWithValidation
 from synthcity.utils.constants import DEVICE
 
 # synthcity relative
@@ -16,7 +16,7 @@ from .flows import NormalizingFlows
 from .tabular_encoder import TabularEncoder
 
 
-class TabularFlows(nn.Module):
+class TabularFlows(TorchModuleWithValidation):
     """
     Normalizing flow for tabular data.
 
@@ -99,10 +99,10 @@ class TabularFlows(nn.Module):
         encoder_whitelist: list = [],
         device: Any = DEVICE,
         # early stopping
-        n_iter_min: int = 100,
+        callbacks: List[Callback] = [],
+        valid_size: float = 0.0,
+        valid_metric: Optional[WeightedMetrics] = None,
         n_iter_print: int = 10,
-        patience: int = 10,
-        patience_metric: Optional[WeightedMetrics] = None,
     ) -> None:
         super(TabularFlows, self).__init__()
         self.columns = X.columns
@@ -126,10 +126,7 @@ class TabularFlows(nn.Module):
             linear_transform_type=linear_transform_type,
             base_transform_type=base_transform_type,
             device=device,
-            n_iter_min=n_iter_min,
             n_iter_print=n_iter_print,
-            patience=patience,
-            patience_metric=patience_metric,
         )
 
     @validate_arguments(config=dict(arbitrary_types_allowed=True))
@@ -154,7 +151,7 @@ class TabularFlows(nn.Module):
         )
         return self
 
-    def generate(self, count: int) -> pd.DataFrame:
+    def generate(self, count: int, cond: Any = None) -> pd.DataFrame:
         samples = self.model.generate(count)
         return self.decode(pd.DataFrame(samples))
 

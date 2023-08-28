@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Callable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 # third party
 import numpy as np
@@ -98,10 +98,6 @@ class GAN(TorchModuleWithValidation):
             Number of iterations after which to print updates and check the validation loss.
         n_iter_min: int
             Minimum number of iterations to go through before starting early stopping
-        patience: int
-            Max number of iterations without any improvement before early stopping is trigged.
-        patience_metric: Optional[WeightedMetrics]
-            If not None, the metric is used for evaluation the criterion for early stopping.
         # privacy settings
         dp_enabled: bool
             Train the discriminator with Differential Privacy guarantees
@@ -153,11 +149,8 @@ class GAN(TorchModuleWithValidation):
         lambda_identifiability_penalty: float = 0.1,
         dataloader_sampler: Optional[sampler.Sampler] = None,
         device: Any = DEVICE,
-        n_iter_min: int = 100,
         n_iter_print: int = 10,
-        patience: int = 20,
-        patience_metric: Optional[WeightedMetrics] = None,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         valid_size: float = 0.0,
         valid_metric: Optional[WeightedMetrics] = None,
         # privacy settings
@@ -223,9 +216,6 @@ class GAN(TorchModuleWithValidation):
         self.generator_n_iter = generator_n_iter
         self.discriminator_n_iter = discriminator_n_iter
         self.n_iter_print = n_iter_print
-        self.n_iter_min = n_iter_min
-        self.patience = patience
-        self.patience_metric = patience_metric
         self.batch_size = batch_size
         self.clipping_value = clipping_value
 

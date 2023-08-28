@@ -1,5 +1,5 @@
 # stdlib
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Tuple
 
 # third party
 import numpy as np
@@ -38,10 +38,6 @@ class ConvNet(TorchModuleWithValidation):
         Number of iterations after which to print updates and check the validation loss.
     random_state: int
         random_state used
-    patience: int
-        Number of iterations to wait before early stopping after decrease in validation loss
-    n_iter_min: int
-        Minimum number of iterations to go through before starting early stopping
     clipping_value: int, default 1
         Gradients clipping value
     early_stopping: bool
@@ -62,7 +58,7 @@ class ConvNet(TorchModuleWithValidation):
         random_state: int = 0,
         clipping_value: int = 1,
         valid_size: float = 0,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
         device: Any = DEVICE,
     ) -> None:
         super().__init__(

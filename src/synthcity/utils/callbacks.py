@@ -1,6 +1,6 @@
 # stdlib
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Sequence
+from typing import Any, List, Optional
 
 # third party
 import pandas as pd
@@ -34,7 +34,7 @@ class Callback(ABC):
 
 
 class CallbackHookMixin(ABC):
-    def __init__(self, callbacks: Sequence[Callback]) -> None:
+    def __init__(self, callbacks: List[Callback]) -> None:
         self.callbacks = callbacks
 
     def on_epoch_begin(self) -> None:
@@ -59,7 +59,7 @@ class ValidationMixin(CallbackHookMixin):
         self,
         valid_metric: Optional[WeightedMetrics] = None,
         valid_size: float = 0,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
     ) -> None:
         super().__init__(callbacks)
         self.valid_metric = valid_metric
@@ -113,7 +113,7 @@ class TorchModuleWithValidation(nn.Module, ValidationMixin):
         self,
         valid_metric: Optional[WeightedMetrics] = None,
         valid_size: float = 0.0,
-        callbacks: Sequence[Callback] = (),
+        callbacks: List[Callback] = [],
     ) -> None:
         nn.Module.__init__(self)
         ValidationMixin.__init__(
